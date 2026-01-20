@@ -2,7 +2,7 @@
   "models": [
     {
       "name": "my-model-1",
-      "model_path": "/root/modeli/my-model-1",
+      "model_path": "/root/models/my-model-1",
       "port": 8001,
       "gpu_memory_utilization": 0.9,
       "max_model_len": 4096,
