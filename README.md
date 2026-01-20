@@ -102,7 +102,7 @@ Open http://localhost:8080 in your browser.
 
 ### Exclusive Mode
 
-When enabled, only one model runs at a time. Inactive models are automatically paused to free GPU memory.
+When enabled, only one model runs at a time. Inactive models are automatically stopped to free GPU memory.
 
 ## API Endpoints
 
