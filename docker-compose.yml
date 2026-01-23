@@ -1,0 +1,13 @@
+services:
+  llm_proxy_manager:
+    build: .
+    container_name: llm_proxy_manager
+    ports:
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./data:/app/data
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      - VLLM_HOST=127.0.0.1

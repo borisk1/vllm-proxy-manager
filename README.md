@@ -1,219 +1,284 @@
-# vLLM Proxy Manager
+# 🚀 LLM Proxy Manager
 
-A Docker-based proxy manager for vLLM models with automatic model lifecycle management, GPU resource optimization, and OpenAI-compatible API.
+A powerful Docker-based management system for running multiple Large Language Models (LLMs) with automatic resource management, load balancing, and an intuitive web interface.
 
-## Features
+![Python](https://img.shields.io/badge/python-3.11+-blue.svg)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-green.svg)
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
 
-- 🚀 **Multi-Model Support** - Manage multiple vLLM models simultaneously
-- 🔄 **Automatic Model Lifecycle** - Start, stop, pause models on demand
-- 💾 **Resource Optimization** - Exclusive mode with automatic model sleeping
-- 🔌 **OpenAI API Compatible** - Drop-in replacement for OpenAI endpoints
-- 🐳 **Docker-based** - Easy deployment with Docker Compose
-- 🎛️ **Web UI** - Simple web interface for model management
-- 📊 **Health Monitoring** - Real-time model status tracking
+## ✨ Features
 
-## Architecture
+### 🎯 Core Features
+- **Multi-Model Management**: Run multiple LLM models simultaneously with isolated Docker containers
+- **Dual Backend Support**: Both vLLM and llama.cpp inference backends
+- **Auto-Sleep Mode**: Automatically pause idle models to save GPU memory
+- **Exclusive Mode**: Run resource-intensive models with exclusive GPU access
+- **OpenAI-Compatible API**: Drop-in replacement for OpenAI API endpoints
+- **Hot-Swapping**: Seamlessly switch between models without downtime
 
-```
-┌─────────────┐
-│ Open WebUI  │
-└──────┬──────┘
-       │ API calls
-       ↓
-┌──────────────────┐
-│ Proxy Manager    │  (Port 8080)
-│ - Routes requests│
-│ - Manages models │
-└────┬─────────────┘
-     │ Docker API
-     ↓
-┌─────────────────────┐
-│ vLLM Containers     │
-│ - Model A (8001)    │
-│ - Model B (8002)    │
-└─────────────────────┘
-```
+### 🛠️ Advanced Features
+- **Tensor Parallelism**: Distribute models across multiple GPUs
+- **Custom Quantization**: Support for AWQ, GPTQ, MXFP4, INT8, FP8
+- **Request Caching**: Intelligent caching during model loading
+- **Funny Loading Messages**: 50+ entertaining messages during model initialization
+- **Real-time Statistics**: Track usage, tokens/sec, and request counts
+- **Docker Integration**: Full Docker API integration for container management
 
-## Prerequisites
+### 🎨 User Interface
+- **Modern Web UI**: Beautiful gradient interface with real-time updates
+- **Model Cards**: Visual representation of each model's status and stats
+- **One-Click Actions**: Start, stop, sleep, wake models with single clicks
+- **Config Import/Export**: Backup and restore your model configurations
+- **Live Monitoring**: Health checks and running model overview
 
-- Docker & Docker Compose
+## 📋 Requirements
+
+- Docker with NVIDIA GPU support
+- Python 3.11+
 - NVIDIA GPU with CUDA support
-- NVIDIA Container Toolkit
+- At least 16GB GPU VRAM (recommended 24GB+)
 
-## Quick Start
+## 🚀 Quick Start
 
-### 1. Clone Repository
+### Installation
 
+1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/vllm-proxy-manager.git
-cd vllm-proxy-manager
+git clone https://github.com/yourusername/llm-proxy-manager.git
+cd llm-proxy-manager
 ```
 
-### 2. Configure Models
+2. Create data directory:
+```bash
+mkdir -p data
+```
 
-Edit `data/models.json`:
+3. Build and start the container:
+```bash
+docker-compose up -d --build
+```
+
+4. Access the web interface:
+```
+http://localhost:8080
+```
+
+### Adding Your First Model
+
+1. Click the **+** button in the bottom-right corner
+2. Fill in the model configuration:
+   - **Name**: A unique identifier for your model
+   - **Backend**: Choose vLLM or llama.cpp
+   - **Model Path**: HuggingFace model ID or local path
+   - **Port**: Unique port for this model (e.g., 8001)
+3. Configure advanced options (optional):
+   - GPU memory utilization
+   - Tensor parallel size
+   - Quantization method
+   - Auto-sleep timeout
+4. Click **Save** and then **Start** to launch the model
+
+## 📚 Usage
+
+### OpenAI-Compatible API
+
+The proxy exposes an OpenAI-compatible API endpoint:
+
+```python
+import openai
+
+client = openai.OpenAI(
+    base_url="http://localhost:8080/v1",
+    api_key="not-needed"
+)
+
+response = client.chat.completions.create(
+    model="your-model-name",
+    messages=[
+        {"role": "user", "content": "Hello!"}
+    ]
+)
+
+print(response.choices[0].message.content)
+```
+
+### Streaming Responses
+
+```python
+stream = client.chat.completions.create(
+    model="your-model-name",
+    messages=[{"role": "user", "content": "Tell me a story"}],
+    stream=True
+)
+
+for chunk in stream:
+    if chunk.choices[0].delta.content:
+        print(chunk.choices[0].delta.content, end="")
+```
+
+### Model Management API
+
+#### List all models
+```bash
+curl http://localhost:8080/api/models
+```
+
+#### Start a model
+```bash
+curl -X POST http://localhost:8080/api/models/your-model-name/start
+```
+
+#### Stop a model
+```bash
+curl -X POST http://localhost:8080/api/models/your-model-name/stop
+```
+
+#### Sleep a model (pause to free GPU memory)
+```bash
+curl -X POST http://localhost:8080/api/models/your-model-name/sleep
+```
+
+#### Wake a model
+```bash
+curl -X POST http://localhost:8080/api/models/your-model-name/wake
+```
+
+## ⚙️ Configuration
+
+### Model Configuration Options
+
+#### Basic Settings
+- **name**: Unique model identifier
+- **backend**: `vllm` or `llamacpp`
+- **model_path**: HuggingFace ID or local filesystem path
+- **is_local**: Set to `true` for local models
+- **port**: Unique port number (8001-9000 recommended)
+
+#### vLLM Settings
+- **gpu_memory_utilization**: GPU memory fraction (0.0-1.0)
+- **max_model_len**: Maximum context length
+- **quantization**: Quantization method (awq, gptq, etc.)
+- **tensor_parallel_size**: Number of GPUs for tensor parallelism
+
+#### llama.cpp Settings
+- **context_size**: Context window size
+- **gpu_layers**: Number of layers offloaded to GPU
+- **parallel_requests**: Number of parallel inference requests
+
+#### Advanced Options
+- **exclusive**: Stop all other models when this one starts
+- **auto_sleep**: Automatically pause after idle timeout
+- **sleep_timeout**: Seconds before auto-sleep (default: 300)
+- **always_visible**: Show in model list even when stopped
+- **preload**: Auto-start on proxy manager startup
+
+#### Custom Arguments
+- **custom_env_vars**: Environment variables for Docker container
+- **custom_vllm_args**: Additional vLLM command-line arguments
+- **custom_llamacpp_args**: Additional llama.cpp arguments
+- **custom_docker_args**: Additional Docker runtime arguments
+- **docker_image**: Override default Docker image
+
+### Example Configuration
 
 ```json
 {
-  "models": [
-    {
-      "name": "glm-45-airko",
-      "model_path": "/path/to/model",
-      "port": 8001,
-      "gpu_memory_utilization": 0.9,
-      "max_model_len": 4096,
-      "served_model_name": "GLM-4.5-Air-Derestricted"
-    }
-  ],
-  "exclusive_mode": true,
-  "health_check_interval": 30
+  "my-model": {
+    "name": "my-model",
+    "backend": "vllm",
+    "model_path": "meta-llama/Llama-2-7b-chat-hf",
+    "is_local": false,
+    "gpu_memory_utilization": 0.9,
+    "max_model_len": 4096,
+    "tensor_parallel_size": 2,
+    "port": 8001,
+    "exclusive": false,
+    "auto_sleep": true,
+    "sleep_timeout": 300,
+    "preload": true
+  }
 }
 ```
 
-### 3. Start Proxy Manager
+## 🏗️ Architecture
 
-```bash
-docker compose up -d
+```
+┌─────────────────────────────────────────────────────────┐
+│                     Web Browser                         │
+│              (http://localhost:8080)                    │
+└────────────────────┬────────────────────────────────────┘
+                     │
+                     ▼
+┌─────────────────────────────────────────────────────────┐
+│              LLM Proxy Manager (FastAPI)                │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐ │
+│  │   Web UI     │  │  OpenAI API  │  │  Management  │ │
+│  │   Server     │  │   Endpoint   │  │     API      │ │
+│  └──────────────┘  └──────────────┘  └──────────────┘ │
+│  ┌──────────────────────────────────────────────────┐  │
+│  │         Docker Container Manager                 │  │
+│  └──────────────────────────────────────────────────┘  │
+└────────────────────┬────────────────────────────────────┘
+                     │
+          ┌──────────┼──────────┐
+          │          │          │
+          ▼          ▼          ▼
+    ┌─────────┐ ┌─────────┐ ┌─────────┐
+    │ vLLM    │ │ vLLM    │ │llama.cpp│
+    │ Model 1 │ │ Model 2 │ │ Model 3 │
+    │ (GPU 0) │ │(GPU 0,1)│ │ (GPU 2) │
+    └─────────┘ └─────────┘ └─────────┘
 ```
 
-### 4. Access Web UI
+## 🔧 Troubleshooting
 
-Open http://localhost:8080 in your browser.
+### Model fails to start
+- Check GPU memory availability: `nvidia-smi`
+- Verify Docker has GPU access: `docker run --gpus all nvidia/cuda:12.1.0-base-ubuntu22.04 nvidia-smi`
+- Check container logs: `docker logs llm_<model_name>`
 
-## Configuration
+### Connection errors
+- Ensure ports aren't conflicting with other services
+- Check firewall settings
+- Verify `VLLM_HOST` environment variable points to correct address
 
-### Environment Variables
-
-- `VLLM_HOST` - Host IP for vLLM containers (default: `172.17.0.1` for Docker bridge network)
-- `PORT` - Proxy manager port (default: `8080`)
-
-### Model Configuration
-
-| Parameter | Description | Default |
-|-----------|-------------|---------|
-| `name` | Unique model identifier | Required |
-| `model_path` | Path to model files | Required |
-| `port` | External port mapping | Required |
-| `gpu_memory_utilization` | GPU memory fraction | `0.9` |
-| `max_model_len` | Maximum context length | `4096` |
-| `served_model_name` | API model name | Same as `name` |
-| `dtype` | Model precision | `auto` |
-| `quantization` | Quantization method | `null` |
-
-### Exclusive Mode
-
-When enabled, only one model runs at a time. Inactive models are automatically stopped to free GPU memory.
-
-## API Endpoints
-
-### Chat Completions
-
-```bash
-curl -X POST http://localhost:8080/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -d '{
-    "model": "glm-45-airko",
-    "messages": [{"role": "user", "content": "Hello!"}]
-  }'
-```
-
-### List Models
-
-```bash
-curl http://localhost:8080/v1/models
-```
-
-### Model Management
-
-```bash
-# Start model
-curl -X POST http://localhost:8080/api/models/{model_name}/start
-
-# Stop model
-curl -X POST http://localhost:8080/api/models/{model_name}/stop
-
-# Get status
-curl http://localhost:8080/api/models/{model_name}/status
-```
-
-## Troubleshooting
-
-### Connection Errors
-
-If you see `Connection error: All connection attempts failed`:
-
-1. Check if vLLM container is running:
-   ```bash
-   docker ps | grep vllm
-   ```
-
-2. If container is paused, unpause it:
-   ```bash
-   docker unpause vllm_{model_name}
-   ```
-
-3. Check network connectivity:
-   ```bash
-   docker exec -it vllm_proxy_manager curl http://172.17.0.1:{port}/v1/models
-   ```
-
-### Model Won't Start
-
-- Verify model path exists and is mounted correctly
-- Check GPU availability: `nvidia-smi`
-- Review container logs: `docker logs vllm_{model_name}`
-
-### Memory Issues
-
-- Reduce `gpu_memory_utilization` in model config
-- Enable `exclusive_mode` to run one model at a time
+### Out of memory errors
+- Reduce `gpu_memory_utilization`
+- Enable auto-sleep for unused models
+- Use quantization (AWQ/GPTQ)
 - Reduce `max_model_len`
 
-## Integration with Open WebUI
+### Slow loading times
+- Use local models instead of downloading from HuggingFace
+- Enable model preloading for frequently used models
+- Check disk I/O performance
 
-1. In Open WebUI, go to **Admin Panel** → **Settings** → **Connections**
-2. Add new OpenAI API connection:
-   - **API Base URL**: `http://vllm_proxy_manager:8080/v1`
-   - **API Key**: (leave empty or set in proxy config)
-3. Models will appear automatically in the model selector
+## 🤝 Contributing
 
-## Development
+Contributions are welcome! Please feel free to submit a Pull Request.
 
-### Project Structure
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-```
-vllm-proxy-manager/
-├── main.py                 # FastAPI application entry point
-├── model_manager.py        # Docker container lifecycle management
-├── config.py              # Configuration loader
-├── Dockerfile             # Proxy manager container image
-├── docker-compose.yml     # Deployment configuration
-├── requirements.txt       # Python dependencies
-├── data/
-│   └── models.json       # Model definitions
-└── static/
-    └── index.html        # Web UI
-```
+## 📝 License
 
-### Running Locally
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-```bash
-# Install dependencies
-pip install -r requirements.txt
+## 🙏 Acknowledgments
 
-# Run proxy manager
-python main.py
-```
+- [vLLM](https://github.com/vllm-project/vllm) - Fast LLM inference engine
+- [llama.cpp](https://github.com/ggerganov/llama.cpp) - Efficient LLM inference in C++
+- [FastAPI](https://fastapi.tiangolo.com/) - Modern web framework
+- [Docker](https://www.docker.com/) - Containerization platform
 
-## License
+## 📧 Support
 
-MIT License - See LICENSE file for details
+For issues, questions, or suggestions, please open an issue on GitHub.
 
-## Contributing
+---
 
-Pull requests are welcome! Please open an issue first to discuss proposed changes.
+Made with ❤️ by the LLM Proxy Manager team
 
-## Acknowledgments
-
-- [vLLM](https://github.com/vllm-project/vllm) - High-performance LLM inference engine
-- [FastAPI](https://fastapi.tiangolo.com/) - Modern web framework for APIs

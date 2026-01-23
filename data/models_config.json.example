@@ -1,0 +1,17 @@
+{
+  "example-model": {
+    "name": "example-model",
+    "backend": "vllm",
+    "model_path": "meta-llama/Llama-2-7b-chat-hf",
+    "is_local": false,
+    "gpu_memory_utilization": 0.9,
+    "max_model_len": 4096,
+    "tensor_parallel_size": 1,
+    "port": 8001,
+    "exclusive": false,
+    "auto_sleep": true,
+    "sleep_timeout": 300,
+    "always_visible": true,
+    "preload": false
+  }
+}
